@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f2e406d5-684c-4a51-bf70-072616b15d0f" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="e196c27c-010c-4447-b99b-21e69f842082" >
+		<db:my-sql-connection host="mudb.mulesoft-training.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="5f977d22-d3ce-4319-9cb9-3374c735f4e7" >
+		<db:my-sql-connection host="mudb.mulesoft-training.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<flow name="americanFlow_get" doc:id="8714ccf7-6cc4-4966-9c3f-0f2b9f15a966" >
+		<http:listener doc:name="QueryParam_Listener" doc:id="0274f337-a945-4fde-9765-dcae3e338041" config-ref="HTTP_Listener_config" path="/american" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="92756508-ce82-4468-ae4d-3c73186634f3" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from american where toAirport=:destination]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'destination':attributes.queryParams.destination}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="49454e53-3a9a-4b42-87ab-7aebb78db4a7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	planeType: payload01.planeType default "",
+	code: (payload01.code1 default "") ++ (payload01.code2 default ""),
+	departureDate: payload01.takeOffDate as String default "",
+	origin: payload01.fromAirport default "",
+	price: payload01.price default 0,
+	emptyseats: payload01.seatsAvailable default 0,
+	destination: payload01.toAirport default "",
+	ID: payload01.ID,
+	airline: payload01.airlineName default "",
+	totalSeats: payload01.totalSeats default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="f5bf5d63-e4bb-4d35-a4a4-fd3fe98973f5" message="#[payload]"/>
+	</flow>
+	<flow name="americanFlow_getbyid" doc:id="d92d9196-60c4-418a-af3e-b99842e56f1d" >
+		<http:listener doc:name="URIParam_Listener" doc:id="c15c05cb-e21e-4577-bf80-04ce0ff3b340" config-ref="HTTP_Listener_config" path="/american/{ID}" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="6510ea65-daa7-433f-9db1-1f667a7d3482" config-ref="Database_Config1">
+			<db:sql ><![CDATA[select * from american where ID=:id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'id': attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="2664c08f-b5ca-4c10-b9ee-8d1dad905fef" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	planeType: payload01.planeType default "",
+	code: (payload01.code1 default "") ++ (payload01.code2 default ""),
+	departureDate: payload01.takeOffDate as String default "",
+	origin: payload01.fromAirport default "",
+	price: payload01.price default 0,
+	emptyseats: payload01.seatsAvailable default 0,
+	destination: payload01.toAirport default "",
+	ID: payload01.ID,
+	airline: payload01.airlineName default "",
+	totalSeats: payload01.totalSeats default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="259b4356-0aea-4cb2-aa43-236a748ab453" message="#[payload]"/>
+	</flow>
+	<flow name="americanFlow_Post" doc:id="a3e2dbe7-f74c-4e6b-b711-16a34bf5344c" >
+		<http:listener doc:name="POST_Listener" doc:id="1155ca52-5738-4f6a-ba46-5e18d7f38745" config-ref="HTTP_Listener_config" path="/american" allowedMethods="POST"/>
+		<set-payload value='{"Message" : " Flight added (but not really)"}' doc:name="Set Payload" doc:id="0efe3c62-2a1a-4cf3-90f6-3deab4be1d3d" mimeType="application/json"/>
+		<logger level="INFO" doc:name="Logger" doc:id="09638959-1730-4c60-bca5-c0f89fb10b3d" message="#[payload]"/>
+	</flow>
+	<flow name="americanFlow_delete" doc:id="ce0b61c5-01af-4796-bd8a-bde363b14055" >
+		<http:listener doc:name="DEL_Listener" doc:id="246bbb26-be85-4aef-a765-00a4b096d944" config-ref="HTTP_Listener_config" path="/american" allowedMethods="DELETE"/>
+		<set-payload value='{"Message":"Flights Deleted (but not really)"}' doc:name="Set Payload" doc:id="b6f13b40-fe7e-402e-8559-09c7011117d7" mimeType="application/json"/>
+		<logger level="INFO" doc:name="Logger" doc:id="b419b10f-4756-484f-99dc-895ea4e6c640" message="#[payload]"/>
+	</flow>
+	<flow name="americanFlow_put" doc:id="1dc8638d-d677-470c-bcf0-e6c26aaaf75d" >
+		<http:listener doc:name="PUT_Listener" doc:id="d07cbe00-6c8b-4f33-b42b-10829007fbab" config-ref="HTTP_Listener_config" path="/american" allowedMethods="PUT"/>
+		<set-payload value='{"Message :" " Flights updated (but not really) "}' doc:name="Set Payload" doc:id="5ff54fba-a967-46f3-a131-151a8ee98ed3" mimeType="application/json"/>
+		<logger level="INFO" doc:name="Logger" doc:id="90c28926-96be-4ee5-b415-7438c3feb1fc" message="#[payload]"/>
+	</flow>
+</mule>

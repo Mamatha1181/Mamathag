@@ -1,0 +1,14 @@
+[
+  {
+    "planeType": "Boeing 787",
+    "code": "rree0001",
+    "departureDate": "2016-01-20T00:00:00",
+    "origin": "MUA",
+    "price": 541,
+    "emptyseats": 0,
+    "destination": "LAX",
+    "ID": 1,
+    "airline": "American Airlines",
+    "totalSeats": 200
+  }
+]
